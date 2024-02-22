@@ -1,0 +1,12 @@
+# Byte-compiled / optimized / DLL files
+.vscode
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+*.dylib
+
+# temp files
+temp_data/
+temp.py
+
