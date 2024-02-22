@@ -88,7 +88,7 @@ def process_all_json_files(folder_path: str, output_folder: str, meta_output_fol
 
 def get_args():
     parser = argparse.ArgumentParser(description="Download images from a JSON file")
-    parser.add_argument("--json_folder", help="Path to the folder containing JSON files")
+    parser.add_argument("--meta_folder", help="Path to the folder containing JSON files")
     parser.add_argument("--output_folder", help="Path to the folder where images will be saved")
     parser.add_argument("--workers", type=int, default=25, help="Number of workers for parallel processing")
     parser.add_argument("--keyword_json", type=str, default="/home/lab/datasets/cc_dogs/query_keywords.json", help="Path to the metadata file")
@@ -103,4 +103,4 @@ if __name__ == "__main__":
     os.makedirs(images_folder, exist_ok=True)
     os.makedirs(meta_folder, exist_ok=True)
     
-    process_all_json_files(args.json_folder, images_folder, meta_folder, class_list)
+    process_all_json_files(args.meta_folder, images_folder, meta_folder, class_list)

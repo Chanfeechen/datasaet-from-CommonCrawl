@@ -3,7 +3,7 @@ import json
 import argparse
 
 import boto3
-from src.cc.cc_matching import process
+from utils.cc_matching import process
 
 def list_all_wat_files(bucket: str, archive_prefix: str, save_uri_to_json: bool = False, json_path: str = None):
     s3 = boto3.client('s3')
@@ -66,23 +66,38 @@ def process_cc_archive(data_uri: str, folder: str, s3_client: boto3.client, meta
 def get_args():
     parser = argparse.ArgumentParser(description='Common Crawl Query')
     parser.add_argument('--output_folder', type=str, default='temp_data/cc/cc_matches', help='Output folder')
-    parser.add_argument('--metadata_file', type=str, default='temp_data/dog_metadata.json', help='Metadata file')
+    parser.add_argument('--keyword_json', type=str, default='temp_data/dog_metadata.json', help='Metadata file')
     parser.add_argument('--archive_folder', type=str, default='temp_data/cc', help='Archive folder')
-    parser.add_argument('--archive', type=str, default='CC-MAIN-2023-50', help='Archive list')
+    parser.add_argument('--crawl', type=str, default='CC-MAIN-2023-50', help='Crawl name, e.g., CC-MAIN-2023-50')
     parser.add_argument('--bucket', type=str, default='commoncrawl', help='Bucket name')
     parser.add_argument('--num_files', type=int, default=None, help='Number of files to process')
+    parser.add_argument('--format', choices=['wat', 'warc'], default='wat', help='Format of the meta files')
+    
+    
+    # AWS credientials
+    parser.add_argument('--aws_access_key_id', type=str, default=None, help='AWS access key id')
+    parser.add_argument('--aws_secret_access_key', type=str, default=None, help='AWS secret access key')
+    parser.add_argument('--aws_session_token', type=str, default=None, help='AWS session token')
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = get_args()
     
-    if not os.path.exists(f'{args.archive_folder}/{args.archive}/wat_file_uris.json'):
-        raise ValueError(f'wat_file_uris.json does not exist for {args.archive}. Please use "list_all_wat_files" to generate the file first.')
+    if not os.path.exists(f'{args.archive_folder}/{args.archive}/{args.format}_file_uris.json'):
+        print(f"Getting {args.format} file uris from {args.bucket}/{args.crawl} and save to {args.archive_folder}/{args.crawl}/{args.format}_file_uris.json...")
+        list_all_wat_files(args.bucket, args.crawl, save_uri_to_json=True, json_path=f'{args.archive_folder}/{args.crawl}/{args.format}_file_uris.json')
     # read the wat file uris
-    wat_file_uris = json.load(open(f'{args.archive_folder}/{args.archive}/wat_file_uris.json', 'r'))
+    wat_file_uris = json.load(open(f'{args.archive_folder}/{args.crawl}/{args.format}_file_uris.json', 'r'))
 
-    s3_client = boto3.client('s3', region_name='us-east-1')
+    if args.aws_access_key_id is not None and args.aws_secret_access_key is not None:
+        s3_client = boto3.client('s3', 
+                                 region_name='us-east-1', 
+                                 aws_access_key_id=args.aws_access_key_id, 
+                                 aws_secret_access_key=args.aws_secret_access_key, 
+                                 aws_session_token=args.aws_session_token)
+    else:
+        s3_client = boto3.client('s3', region_name='us-east-1')
 
     process_file_count = 0
     for wat_file_uri in wat_file_uris:
@@ -94,5 +109,5 @@ if __name__ == '__main__':
         if os.path.exists(output_file):
             print(f'{output_file} already exists.')
             continue
-        process_cc_archive(wat_file_uri, args.output_folder, s3_client, args.metadata_file)
+        process_cc_archive(wat_file_uri, args.output_folder, s3_client, args.keyword_json)
         process_file_count += 1

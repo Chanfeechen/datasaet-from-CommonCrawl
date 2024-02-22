@@ -8,7 +8,6 @@ import time
 import gzip
 import uuid
 import logging
-import hashlib
 import functools
 
 from tqdm import tqdm
@@ -16,7 +15,7 @@ from urllib.parse import urljoin
 from collections import defaultdict
 from multiprocessing import Process, Manager, Pool
 from .substr_matching import substr_matching
-from concurrent.futures import ProcessPoolExecutor, as_completed
+# from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
@@ -102,13 +101,6 @@ class CCCurator(object):
         entries_lists = [metadata] * len(data_lists)
         num_proc = len(data_lists)
 
-        # with Pool(num_proc) as p:
-        #     results = p.starmap(process_data, zip(data_lists, entries_lists))
-
-        # data = []
-        # for result in results:
-        #     data.extend(result)
-        # return data
         results = []
         with Pool(num_proc) as p:
             for result in tqdm(p.starmap(process_data, zip(data_lists, entries_lists)),
